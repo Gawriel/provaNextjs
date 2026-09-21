@@ -26,7 +26,7 @@ L'utente potra:
 
 Dal punto di vista tecnico si dimostrano:
   Next.js, React, TypeScript, API REST (Route Handlers),
-  Prisma, MongoDB, Login/JWT, CRUD, filtri, ricerca, routing,
+  Mongoose, MongoDB, Login/JWT, CRUD, filtri, ricerca, routing,
   componenti riusabili, stato/context, deploy.
 
 
@@ -43,7 +43,7 @@ Next.js + API Routes (SENZA Express separato).
     - app/api/       -> backend REST (Route Handlers)
         |
         v
-     Prisma
+     Mongoose
         |
         v
      MongoDB
@@ -85,15 +85,22 @@ File/cartelle attuali in reactnextjs (base create-next-app):
   README.md
   node_modules/      -> pacchetti installati
 
+STATO AGGIORNATO:
+  - SiteHeader nel RootLayout (sempre visibile su tutte le route)
+  - Pagine: / (home), /film, /prenotazioni, /profilo
+  - not-found.tsx (404) e /unauthorized
+  - lib/debug.ts (DEBUG_ENABLE + DEBUG_LEVEL)
+  - Brand di lavoro: CinemaVerse
+  - Backend a moduli (model → repository → service → controller)
+  - app/api è solo adattatore HTTP Next (GET/PUT chiamano putGenere, getMovies, ...)
+  - Pagina /film legge i film da GET /api/movies
+  - Collection separate: Movie, Genere, Persona (attori+registi)
+
 COSA NON C'E ANCORA:
-  - Prisma / MongoDB
-  - cartella app/api/
-  - components/ custom
-  - auth / JWT
-  - pagine movies, login, profile, admin
-  - dati film (neanche statici)
-  - .env di progetto (DATABASE_URL, JWT_SECRET, DEBUG_*)
-  - logica CinemaVerse
+  - Auth / JWT
+  - admin UI per creare film
+  - watch, prenotazione posti
+  - User, Favorite, Review, Reservation
 
 
 ================================================================================
@@ -117,44 +124,84 @@ reactnextjs/
     admin/movies/
       page.tsx                        # CRUD admin
       [id]/edit/page.tsx
-    api/                              # BACKEND
-      auth/login/route.ts
-      auth/register/route.ts
-      auth/me/route.ts
-      movies/route.ts                 # GET lista, POST crea
-      movies/[id]/route.ts           # GET/PUT/DELETE
-      favorites/route.ts
-      reviews/route.ts
-      reservations/route.ts
+    api/                              # ADATTATORE HTTP Next (file = URL)
+      generi/route.ts                 # GET lista, POST crea  → getGeneri, postGenere
+      generi/[id]/route.ts            # GET/PUT/DELETE un genere → getGenere, putGenere, deleteGenere
+      persone/route.ts
+      persone/[id]/route.ts
+      movies/route.ts
+      movies/[id]/route.ts
+  server/
+    common/                           # codice condiviso tra moduli
+      db/connect.ts
+      db/serialize.ts
+      http/                           # ApiError, jsonOk, parseObjectId
+    modules/                          # UN MODULO = UNA RISORSA (stile Nest/Spring)
+      genere/
+        genere.model.ts               # schema Mongo
+        genere.repository.ts          # solo accesso DB
+        genere.service.ts             # regole di business
+        genere.controller.ts          # getGeneri, postGenere, putGenere, ...
+      persona/
+      movie/
   components/
-    layout/   (Header, Footer, UserAvatar)
-    movies/   (MovieCard, MovieFilters, MovieGrid, MoviePlayer)
-    auth/     (LoginForm, RegisterForm)
-    booking/  (SeatMap)
-    ui/       (button, input, dialog riusabili)
+    layout/
+    movies/
   lib/
-    prisma.ts
-    auth.ts
-    debug.ts                          # DEBUG_ENABLE + DEBUG_LEVEL 1-4
-  context/
-    AuthContext.tsx
+    debug.ts
+    api-client.ts                     # fetch dal frontend verso /api
   types/
-    movie.ts, user.ts, reservation.ts
-  data/
-    movies.ts                         # SOLO Fase 1 (array statico)
-  prisma/
-    schema.prisma
-  .env / .env.example
+    movie.ts, genere.ts, persona.ts
+  env.example                         # copiare in .env.local
+
+ARCHITETTURA A STRATI (OBBLIGATORIA)
+------------------------------------
+  1. Model       = forma della collection Mongo
+  2. Repository  = find/create/update/delete (niente HTTP, niente regole)
+  3. Service     = validazione, relazioni, populate, errori 404/400
+  4. Controller  = getGeneri / postGenere / putGenere / deleteGenere
+  5. app/api     = Next richiede un file per URL: PUT /api/generi/:id
+                   chiama putGenere. Non si mette putGenere nel nome del file.
+
+  Perché [id] per OGNI risorsa e non uno solo:
+    /api/generi/ABC  e  /api/movies/ABC  sono URL diversi.
+    Next mappa le cartelle sugli URL. Un solo [id] sarebbe /api/[id]
+    e non sapresti se ABC è un genere o un film.
 
 
-MODELLO DATI (MongoDB via Prisma)
----------------------------------
+MODELLO DATI (MongoDB via Mongoose)
+-----------------------------------
+  Genere       -> nome (unique)
+  Persona      -> nome, bio, foto, ruoli[] (attore e/o regista)
+  Movie        -> titolo, descrizione, anno, durata, poster, trailer,
+                  streaming, generi[ObjectId], registi[ObjectId],
+                  attori[ObjectId]
+  (futuro)
   User         -> nome, email, passwordHash, role (USER | ADMIN)
-  Movie        -> titolo, descrizione, anno, durata, genere,
-                  poster, trailer, streaming
   Favorite     -> userId + movieId
   Review       -> userId + movieId + voto + commento
   Reservation  -> userId + movieId + cinema + data + posti
+
+COME COLLEGARE UN FILM AD ATTORI/REGISTI/GENERI
+-----------------------------------------------
+  1. POST /api/generi     { "nome": "Azione" }           -> id genere
+  2. POST /api/persone    { "nome": "Nolan", "ruoli": ["regista"] }
+  3. POST /api/persone    { "nome": "DiCaprio", "ruoli": ["attore"] }
+  4. POST /api/movies     {
+       "titolo": "Inception",
+       "descrizione": "...",
+       "anno": 2010,
+       "durata": 148,
+       "poster": "",
+       "trailer": "",
+       "streaming": "",
+       "genereIds": ["ID_GENERE"],
+       "registaIds": ["ID_NOLAN"],
+       "attoreIds": ["ID_DICAPRIO"]
+     }
+
+  Il film NON copia i nomi. Salva solo gli id.
+  In GET, Mongoose populate() riempie attori/registi/generi con i documenti.
 
 
 ================================================================================

@@ -1,0 +1,529 @@
+================================================================================
+  CINEMAVERSE - STRUTTURA PROGETTO TARGET
+  Data: 11/09/2026
+  Legge: riepilogo-progetto.txt + stato reale del repo (cartella src/)
+================================================================================
+
+SCOPO DI QUESTO FILE
+--------------------
+Spiegare come organizzare il codice in modo professionale (stile aziendale),
+partendo da quello che c'e OGGI e arrivando all'obiettivo finale descritto
+in riepilogo-progetto.txt (Netflix + IMDb + cinema + portfolio).
+
+Non e una checklist di codice: e la mappa delle cartelle, dei ruoli e
+dell'ordine in cui espandere il progetto senza rifare tutto ogni volta.
+
+
+================================================================================
+  1. OBIETTIVO FINALE (sintesi da riepilogo-progetto.txt)
+================================================================================
+
+PRODOTTO
+  - Catalogo film con filtri, ricerca, ordinamento
+  - Dettaglio locandina per ogni film
+  - Login / registrazione (JWT)
+  - UI diversa da loggato (avatar iniziali in header)
+  - Profilo, preferiti, logout
+  - Streaming finto (/film/[id]/watch)
+  - Prenotazione posti (mappa verde/rosso/giallo)
+  - Area ADMIN: CRUD film (sostituisce Employee Manager)
+
+STACK
+  - Next.js + TypeScript + Tailwind
+  - API REST via Route Handlers (app/api) - NO Express separato
+  - Mongoose + MongoDB
+  - Deploy: Vercel + MongoDB Atlas
+
+COMPETENZE DA DIMOSTRARE AL RECRUITER
+  Next, React, TS, REST, Mongo, JWT, CRUD, filtri, routing, componenti,
+  stato/context, deploy su app completa e navigabile.
+
+
+================================================================================
+  2. STATO ATTUALE DEL REPO (11/09/2026)
+================================================================================
+
+ROOT REPOSITORY
+  progettoReactNextJs/
+    cartellaRiepilogo/          documentazione (fuori dall'app)
+    reactnextjs/                applicazione Next.js
+    name.basics.tsv             dati esterni (non parte dell'app)
+
+DENTRO reactnextjs/ (config a radice, codice sotto src/)
+  public/                       asset statici
+  package.json, next.config.ts, tsconfig.json, env.example
+  src/
+    app/                        pagine + app/api (adapter HTTP)
+    components/                 UI (layout, movies)
+    lib/                        debug.ts, api-client.ts
+    types/                      movie, genere, persona
+    server/
+      common/                   db, http condivisi
+      modules/                  genere, persona, movie (model-repo-service-controller)
+
+GIA FATTO
+  [x] Navbar persistente (SiteHeader in layout)
+  [x] Pagine: /, /film, /prenotazioni, /profilo, /unauthorized, 404
+  [x] Backend modulare Mongoose (Genere, Persona, Movie)
+  [x] API: /api/generi, /api/persone, /api/movies
+  [x] Pagina /film legge GET /api/movies
+  [x] Debug centralizzato (lib/debug.ts)
+  [x] Cartella src/ (scelta corretta per progetti medi/grandi)
+
+NON ANCORA FATTO (vs obiettivo finale)
+  [ ] Dettaglio film /film/[id]
+  [ ] Filtri e ricerca UI completi
+  [ ] Admin CRUD UI
+  [ ] Auth JWT + User model
+  [ ] Profilo reale + avatar iniziali
+  [ ] Preferiti, recensioni
+  [ ] Watch finto, prenotazione posti
+  [ ] Moduli server: user, favorite, review, reservation
+  [ ] Deploy produzione
+
+NOTA IMPORT ALIAS (da sistemare)
+  Oggi molti file usano:  import ... from "@/src/lib/debug"
+  Standard consigliato:   import ... from "@/lib/debug"
+
+  In tsconfig.json impostare:
+    "paths": { "@/*": ["./src/*"] }
+
+  Poi sostituire @/src/ con @/ in tutto il progetto.
+  Cosi @/ = root del codice sorgente, come in azienda.
+
+
+================================================================================
+  3. PERCHE LA CARTELLA src/ HA SENSO
+================================================================================
+
+Separare CONFIG (root) da CODICE (src/) e una convenzione comune:
+
+  reactnextjs/
+    next.config.ts      <- configurazione framework
+    tsconfig.json
+    package.json
+    public/             <- Next lo serve fuori da src
+    src/                <- TUTTO il codice applicativo
+
+Vantaggi:
+  - Confine chiaro: "tutto cio che scriviamo noi sta in src/"
+  - server/ non si confonde con node_modules o file di build
+  - Scalabile quando aggiungi auth, admin, prenotazioni
+  - Allineato a create-next-app con opzione --src-dir
+
+Next.js si aspetta:
+  - src/app/     (non app/ alla root) se usi src
+  - public/      sempre alla root del progetto Next
+
+
+================================================================================
+  4. STRUTTURA TARGET COMPLETA (versione finale)
+================================================================================
+
+reactnextjs/
+|
+|-- public/                          # immagini, favicon, asset statici
+|-- env.example
+|-- package.json
+|-- next.config.ts
+|-- tsconfig.json                    # "@/*" -> "./src/*"
+|
++-- src/
+    |
+    |-- app/                         # FRONTEND routing + ADAPTER API
+    |   |-- layout.tsx               # RootLayout + SiteHeader
+    |   |-- page.tsx                 # Home
+    |   |-- globals.css
+    |   |-- not-found.tsx
+    |   |-- unauthorized/page.tsx
+    |   |
+    |   |-- film/                    # UI utente (italiano URL ok)
+    |   |   |-- page.tsx             # catalogo
+    |   |   +-- [id]/
+    |   |       |-- page.tsx         # dettaglio locandina
+    |   |       |-- watch/page.tsx   # streaming finto
+    |   |       +-- book/page.tsx    # prenotazione posti
+    |   |
+    |   |-- prenotazioni/page.tsx    # lista prenotazioni utente
+    |   |-- profilo/page.tsx
+    |   |-- login/page.tsx
+    |   |-- register/page.tsx
+    |   |
+    |   |-- admin/                   # solo ADMIN (dopo JWT)
+    |   |   +-- film/
+    |   |       |-- page.tsx         # tabella + CRUD
+    |   |       |-- new/page.tsx
+    |   |       +-- [id]/edit/page.tsx
+    |   |
+    |   +-- api/                     # SOLO adapter HTTP (sottili!)
+    |       |-- generi/route.ts
+    |       |-- generi/[id]/route.ts
+    |       |-- persone/route.ts
+    |       |-- persone/[id]/route.ts
+    |       |-- movies/route.ts
+    |       |-- movies/[id]/route.ts
+    |       |-- auth/
+    |       |   |-- login/route.ts
+    |       |   |-- register/route.ts
+    |       |   +-- me/route.ts
+    |       |-- favorites/route.ts
+    |       |-- favorites/[id]/route.ts
+    |       |-- reviews/route.ts
+    |       |-- reviews/[id]/route.ts
+    |       +-- reservations/route.ts
+    |
+    |-- components/                  # SOLO UI React (mai Mongoose qui)
+    |   |-- layout/
+    |   |   |-- SiteHeader.tsx
+    |   |   |-- SiteFooter.tsx
+    |   |   |-- NavLink.tsx
+    |   |   +-- UserAvatar.tsx       # iniziali utente loggato
+    |   |-- movies/
+    |   |   |-- MovieCard.tsx
+    |   |   |-- MovieGrid.tsx
+    |   |   |-- MovieFilters.tsx
+    |   |   |-- MovieDetail.tsx
+    |   |   +-- MoviePlayer.tsx
+    |   |-- auth/
+    |   |   |-- LoginForm.tsx
+    |   |   +-- RegisterForm.tsx
+    |   |-- admin/
+    |   |   |-- MovieForm.tsx
+    |   |   +-- DeleteMovieDialog.tsx
+    |   |-- booking/
+    |   |   |-- SeatMap.tsx
+    |   |   +-- BookingSummary.tsx
+    |   +-- ui/                      # bottoni, input, dialog riusabili
+    |
+    |-- context/
+    |   +-- AuthContext.tsx          # utente loggato, token, logout
+    |
+    |-- hooks/                       # opzionale ma utile
+    |   |-- useAuth.ts
+    |   +-- useMovies.ts
+    |
+    |-- lib/                         # codice condiviso lato client
+    |   |-- debug.ts
+    |   +-- api-client.ts            # fetch verso /api/*
+    |
+    |-- types/                       # contratti TypeScript (DTO)
+    |   |-- movie.ts
+    |   |-- genere.ts
+    |   |-- persona.ts
+    |   |-- user.ts                  # futuro
+    |   |-- favorite.ts
+    |   |-- review.ts
+    |   +-- reservation.ts
+    |
+    +-- server/                      # BACKEND (import "server-only" dove serve)
+        |-- common/
+        |   |-- db/
+        |   |   |-- connect.ts
+        |   |   |-- serialize.ts
+        |   |   +-- register-models.ts
+        |   +-- http/
+        |       |-- errors.ts        # ApiError
+        |       |-- response.ts      # jsonOk, handleApiError
+        |       |-- object-id.ts
+        |       +-- route-context.ts
+        |-- middleware/              # futuro: requireAuth, requireAdmin
+        |   +-- auth-guard.ts
+        |
+        +-- modules/                 # 1 cartella = 1 dominio business
+            |-- genere/              # [FATTO]
+            |-- persona/             # [FATTO]
+            |-- movie/               # [FATTO]
+            |-- user/                # [FASE 5]
+            |-- favorite/            # [FASE 6]
+            |-- review/              # [FASE 6-7]
+            +-- reservation/         # [FASE 8]
+
+Ogni modulo server ha SEMPRE la stessa forma:
+  nome.model.ts
+  nome.repository.ts
+  nome.service.ts
+  nome.controller.ts
+
+
+================================================================================
+  5. ARCHITETTURA A STRATI (regola da non infrangere)
+================================================================================
+
+                    REQUEST HTTP
+                         |
+                         v
+              +---------------------+
+              |  app/api/.../route  |  Adapter Next (5-20 righe)
+              |  export GET/POST... |
+              +----------+----------+
+                         |
+                         v
+              +---------------------+
+              |     CONTROLLER      |  getMovies, putGenere, postLogin
+              |  *.controller.ts    |  nomi leggibili, niente Mongo
+              +----------+----------+
+                         |
+                         v
+              +---------------------+
+              |      SERVICE        |  validazione, regole, relazioni
+              |   *.service.ts      |  "genereIds devono esistere"
+              +----------+----------+
+                         |
+                         v
+              +---------------------+
+              |    REPOSITORY       |  find, create, update, delete
+              |  *.repository.ts    |  solo query Mongoose
+              +----------+----------+
+                         |
+                         v
+              +---------------------+
+              |       MODEL         |  schema collection Mongo
+              |    *.model.ts       |
+              +---------------------+
+                         |
+                         v
+                     MongoDB
+
+FRONTEND (parallelo, mai salta i layer):
+  Page/Component  -->  lib/api-client  -->  fetch("/api/...")  -->  stesso flusso sopra
+
+COSA NON FARE
+  - Mongoose dentro components/ o page.tsx client
+  - Logica business dentro app/api/route.ts (solo try/catch + chiamata controller)
+  - Un file unico "backend.ts" con tutto dentro
+  - Service che importano Request/Response di Next
+
+
+================================================================================
+  6. UI vs API: /film vs /api/movies (naming)
+================================================================================
+
+Oggi:
+  - URL pagina utente:  /film
+  - URL API REST:       /api/movies
+
+E' accettabile e comune:
+  - UI in italiano / brand (/film, /prenotazioni, /profilo)
+  - API in inglese REST (/api/movies) - standard JSON API
+
+Alternativa (uniformare tutto):
+  - rinominare pagine in /movies oppure API in /api/film
+
+CONSIGLIO: tieni /film per UI e /api/movies per API.
+Documentalo e non mescolare i due mondi:
+  - src/app/film/           = cosa vede l'utente
+  - src/app/api/movies/     = contratto dati per frontend/admin
+
+
+================================================================================
+  7. COME EVOLVERE LA STRUTTURA PER FASE (allineato al riepilogo)
+================================================================================
+
+--- FASE ATTUALE (~ tra Fase 3 e 4 del piano originale) ---
+Hai superato catalogo statico e DB/API base.
+
+Prossimi micro-step strutturali:
+  1. Fix alias tsconfig: @/* -> ./src/*
+  2. Aggiungere src/app/film/[id]/page.tsx + MovieDetail component
+  3. Aggiungere MovieFilters.tsx (filtri chiamano GET /api/movies?q=&genereId=&anno=)
+  4. Creare src/components/ui/ per elementi base riusabili
+
+--- FASE 4 - Admin CRUD (senza auth) ---
+Aggiungi:
+  src/app/admin/film/page.tsx
+  src/app/admin/film/new/page.tsx
+  src/app/admin/film/[id]/edit/page.tsx
+  src/components/admin/MovieForm.tsx
+  src/components/admin/DeleteMovieDialog.tsx
+
+Le form admin chiamano POST/PUT/DELETE /api/movies (gia esistenti).
+
+--- FASE 5 - Auth JWT ---
+Aggiungi modulo server:
+  src/server/modules/user/
+    user.model.ts       (nome, email, passwordHash, role: USER|ADMIN)
+    user.repository.ts
+    user.service.ts     (hash bcrypt, verify password, sign JWT)
+    user.controller.ts  (postLogin, postRegister, getMe)
+
+Aggiungi API:
+  src/app/api/auth/login/route.ts
+  src/app/api/auth/register/route.ts
+  src/app/api/auth/me/route.ts
+
+Aggiungi frontend:
+  src/app/login/page.tsx
+  src/app/register/page.tsx
+  src/context/AuthContext.tsx
+  src/server/middleware/auth-guard.ts  (helper per proteggere controller admin)
+
+Proteggi:
+  - PUT/DELETE /api/movies solo ADMIN
+  - route /admin/* solo ADMIN
+
+--- FASE 6 - Profilo e preferiti ---
+Modulo server:
+  src/server/modules/favorite/
+
+Componenti:
+  src/components/layout/UserAvatar.tsx  (iniziali in SiteHeader)
+  aggiornare src/app/profilo/page.tsx
+
+API:
+  src/app/api/favorites/route.ts
+
+--- FASE 7 - Streaming finto ---
+  src/app/film/[id]/watch/page.tsx
+  src/components/movies/MoviePlayer.tsx
+  (niente nuovo modulo server se usi trailer URL gia su Movie)
+
+--- FASE 8 - Prenotazioni ---
+Modulo server:
+  src/server/modules/reservation/
+  (userId, movieId, cinema, data, posti[])
+
+UI:
+  src/app/film/[id]/book/page.tsx
+  src/components/booking/SeatMap.tsx
+  src/app/prenotazioni/page.tsx  (lista prenotazioni utente)
+
+API:
+  src/app/api/reservations/route.ts
+
+--- FASE 9 - Deploy ---
+  - MongoDB Atlas + MONGODB_URI in Vercel env
+  - JWT_SECRET in env produzione
+  - README portfolio con screenshot e link demo
+
+
+================================================================================
+  8. MODELLO DATI - ESPANSIONE MODULI SERVER
+================================================================================
+
+[FATTO]
+  Genere, Persona, Movie
+
+[DA AGGIUNGERE - stesso pattern model/repository/service/controller]
+
+  User
+    nome, email, passwordHash, role (USER | ADMIN)
+
+  Favorite
+    userId -> User, movieId -> Movie
+    (unique compound: un preferito per coppia user+film)
+
+  Review
+    userId, movieId, voto (1-5), commento
+
+  Reservation
+    userId, movieId, cinema (string), data (Date), posti (string[] o schema embedded)
+    opzionale: Showtime come entita separata se cresce il dominio
+
+Relazioni Movie (gia corretto):
+  generi[], registi[], attori[] = array di ObjectId, populate in lettura
+
+
+================================================================================
+  9. CONVENZIONI PROFESSIONALI (da rispettare sempre)
+================================================================================
+
+CARTELLE
+  - src/app/           routing Next (non spostare logica pesante qui)
+  - src/components/    UI spezzata per dominio (movies, auth, admin, booking)
+  - src/server/        backend-only
+  - src/types/         tipi condivisi FE/BE
+  - src/lib/           utility client-safe (debug, fetch wrapper)
+
+COMPONENTI
+  - Max ~300-400 righe; oltre -> spezzare
+  - Form = componente dedicato (MovieForm, LoginForm)
+  - Dialog = componente dedicato (DeleteMovieDialog)
+  - Props configurabili, niente hardcode duplicato
+
+DEBUG
+  - lib/debug.ts + DEBUG_ENABLE + DEBUG_LEVEL (1-4)
+  - Controller: livello 4, Service: 3, errori: 1
+
+GIT
+  - Commit per feature/modulo (es. "feat(admin): add movie form pages")
+  - .env.local mai su Git; solo env.example
+
+SICUREZZA
+  - JWT solo server-side per verify; client tiene token (httpOnly cookie ideale)
+  - Mai esporre passwordHash in API response
+
+
+================================================================================
+  10. DIFFERENZA TRA I DUE FILE DI RIEPILOGO
+================================================================================
+
+riepilogo-progetto.txt
+  - Visione, obiettivi, fasi, checklist storica
+  - Va aggiornato quando completi una fase (alcune parti sono obsolete:
+    es. ancora cita Prisma in checklist Fase 2, ma usi Mongoose)
+
+struttura-progetto-target.txt  (QUESTO FILE)
+  - Mappa cartelle, architettura a strati, evoluzione src/
+  - Riferimento per "dove metto il prossimo file?"
+
+
+================================================================================
+  11. CHECKLIST MIGRAZIONE STRUTTURA (prossime azioni concrete)
+================================================================================
+
+IMMEDIATE (pulizia, nessuna feature nuova)
+  [ ] tsconfig: "@/*": ["./src/*"]
+  [ ] Replace globale import "@/src/..." -> "@/..."
+  [ ] Aggiornare riepilogo-progetto.txt: menzionare src/, Mongoose non Prisma
+  [ ] Verificare npm run dev + npm run build dopo fix alias
+
+BREVE TERMINE (completare "catalogo" vero)
+  [ ] src/app/film/[id]/page.tsx
+  [ ] src/components/movies/MovieFilters.tsx
+  [ ] src/components/movies/MovieGrid.tsx
+  [ ] Collegare filtri a query string API (?q=&genereId=&anno=)
+
+MEDIO TERMINE (admin + auth)
+  [ ] src/app/admin/film/...
+  [ ] src/server/modules/user/...
+  [ ] src/app/api/auth/...
+  [ ] src/context/AuthContext.tsx
+  [ ] UserAvatar in SiteHeader
+
+LUNGO TERMINE (obiettivo finale portfolio)
+  [ ] favorite, review, reservation modules
+  [ ] watch + book pages
+  [ ] deploy Vercel + Atlas
+
+
+================================================================================
+  12. SCHEMA RIASSUNTIVO (1 pagina)
+================================================================================
+
+  progettoReactNextJs/
+    cartellaRiepilogo/     <- documenti come questo
+    reactnextjs/
+      public/
+      src/
+        app/               UI + api adapter
+        components/        React UI
+        lib/               client utils
+        types/             DTO
+        context/           auth state
+        server/
+          common/          db + http
+          modules/         genere | persona | movie | user | ...
+      env.example
+
+  Flusso:  Page -> api-client -> app/api -> controller -> service -> repo -> Mongo
+
+  Regola d'oro: se non sai dove mettere un file, chiediti:
+    - E' una pagina URL?        -> src/app/
+    - E' UI riusabile?          -> src/components/
+    - E' regola business/DB?    -> src/server/modules/...
+    - E' solo ingresso HTTP?    -> src/app/api/ (chiama controller)
+
+
+================================================================================
+  FINE DOCUMENTO
+================================================================================
