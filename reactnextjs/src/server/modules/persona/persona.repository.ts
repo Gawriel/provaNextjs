@@ -1,11 +1,11 @@
-import type { FilterQuery } from "mongoose";
+import type { QueryFilter } from "mongoose";
 import { connectDb } from "@/src/server/common/db/connect";
 import { parseObjectId } from "@/src/server/common/http/object-id";
 import { PersonaModel, type PersonaDocument } from "./persona.model";
 import type { PersonaWrite } from "@/src/types/persona";
 
 export const personaRepository = {
-  async findAll(filter: FilterQuery<PersonaDocument> = {}) {
+  async findAll(filter: QueryFilter<PersonaDocument> = {}) {
     await connectDb();
     return PersonaModel.find(filter).sort({ nome: 1 }).lean();
   },
@@ -42,6 +42,6 @@ export const personaRepository = {
     const objectIds = unique.map((id) => parseObjectId(id, "personaId"));
     return PersonaModel.countDocuments({
       _id: { $in: objectIds },
-    } as FilterQuery<PersonaDocument>);
+    } as QueryFilter<PersonaDocument>);
   },
 };

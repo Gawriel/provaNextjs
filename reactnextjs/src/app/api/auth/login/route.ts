@@ -1,20 +1,3 @@
-// import { handleApiError, jsonOk } from "@/src/server/common/http/response";
-// import { loginUser } from "@/src/server/modules/user/user.controller";
-
-// export const runtime = "nodejs";
-
-// export async function POST(request: Request) {
-//   try {
-//     const body = await request.json();
-
-//     const user = await loginUser(body);
-
-//     return jsonOk(user);
-//   } catch (error) {
-//     return handleApiError(error);
-//   }
-// }
-
 import { cookies } from "next/headers";
 import { createToken } from "@/src/server/auth/jwt";
 import { handleApiError, jsonOk } from "@/src/server/common/http/response";

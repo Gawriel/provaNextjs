@@ -5,9 +5,13 @@ function isObjectId(value: unknown): value is mongoose.Types.ObjectId {
 }
 
 /** Converte i documenti Mongo (_id) nel formato frontend (id). */
-export function serializeDoc<T>(value: T): T {
-  return transform(value) as T;
+
+export function serializeDoc(value: unknown): unknown {
+  return transform(value);
 }
+// export function serializeDoc<T>(value: T): T {
+//   return transform(value) as T;
+// }
 
 function transform(value: unknown): unknown {
   if (value == null) return value;

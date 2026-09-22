@@ -7,7 +7,7 @@ import type { Persona } from "./persona";
  */
 export type Movie = {
   id: string;
-  imdbId: string;
+  imdbId?: string;
   titolo: string;
   descrizione: string;
   anno: number;

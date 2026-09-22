@@ -1,4 +1,4 @@
-import type { FilterQuery } from "mongoose";
+import type { QueryFilter } from "mongoose";
 import { debugLog } from "@/src/lib/debug";
 import { serializeDoc } from "@/src/server/common/db/serialize";
 import { ApiError } from "@/src/server/common/http/errors";
@@ -55,8 +55,8 @@ function parseMovie(body: unknown): MovieRecord {
   };
 }
 
-function movieFilter(searchParams: URLSearchParams): FilterQuery<MovieDocument> {
-  const filter: FilterQuery<MovieDocument> = {};
+function movieFilter(searchParams: URLSearchParams): QueryFilter<MovieDocument> {
+  const filter: QueryFilter<MovieDocument> = {};
   const q = searchParams.get("q")?.trim();
   const genereId = searchParams.get("genereId")?.trim();
   const anno = searchParams.get("anno");
@@ -82,9 +82,15 @@ async function assertRelations(record: MovieRecord): Promise<void> {
 export const movieService = {
   async getMovies(searchParams: URLSearchParams): Promise<MovieDto[]> {
     const filter = movieFilter(searchParams);
+
     debugLog(4, "MovieService", "getMovies filter", filter);
+
     const rows = await movieRepository.findAll(filter);
-    debugLog(3, "MovieService", "getMovies", { count: rows.length });
+
+    debugLog(3, "MovieService", "getMovies", {
+      count: rows.length,
+    });
+
     return serializeDoc(rows) as MovieDto[];
   },
 

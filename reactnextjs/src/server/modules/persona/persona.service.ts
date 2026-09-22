@@ -19,8 +19,8 @@ function parsePersona(body: unknown): PersonaWrite {
 
   const ruoli = Array.isArray(raw.ruoli)
     ? raw.ruoli.filter((ruolo): ruolo is RuoloPersona =>
-        RUOLI.includes(ruolo as RuoloPersona),
-      )
+      RUOLI.includes(ruolo as RuoloPersona),
+    )
     : [];
 
   return {
@@ -33,13 +33,20 @@ function parsePersona(body: unknown): PersonaWrite {
 
 export const personaService = {
   async getPersone(ruolo?: string): Promise<PersonaDto[]> {
-    const filter =
-      ruolo === "attore" || ruolo === "regista" ? { ruoli: ruolo } : {};
+    const ruoloValido: RuoloPersona | undefined =
+      ruolo === "attore" || ruolo === "regista" ? ruolo : undefined;
+
+    const filter = ruoloValido
+      ? { ruoli: ruoloValido }
+      : {};
+
     const rows = await personaRepository.findAll(filter);
+
     debugLog(3, "PersonaService", "getPersone", {
       count: rows.length,
-      ruolo: ruolo ?? "tutti",
+      ruolo: ruoloValido ?? "tutti",
     });
+
     return serializeDoc(rows) as PersonaDto[];
   },
 

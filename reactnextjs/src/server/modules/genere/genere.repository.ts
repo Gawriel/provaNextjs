@@ -1,4 +1,4 @@
-import type { FilterQuery } from "mongoose";
+import type { QueryFilter } from "mongoose";
 import { connectDb } from "@/src/server/common/db/connect";
 import { parseObjectId } from "@/src/server/common/http/object-id";
 import { GenereModel, type GenereDocument } from "./genere.model";
@@ -40,6 +40,6 @@ export const genereRepository = {
     const objectIds = ids.map((id) => parseObjectId(id, "genereId"));
     return GenereModel.countDocuments({
       _id: { $in: objectIds },
-    } as FilterQuery<GenereDocument>);
+    } as QueryFilter<GenereDocument>);
   },
 };

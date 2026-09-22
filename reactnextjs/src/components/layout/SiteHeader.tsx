@@ -35,8 +35,9 @@ export function SiteHeader({
   }, [pathname]);
 
   return (
+    // <main className="mx-auto flex w-[90%] max-w-[1600px] flex-1 flex-col gap-3 py-10">
     <header className="sticky top-0 z-50 border-b border-zinc-800 bg-zinc-950 text-white">
-      <div className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
+      <div className="mx-auto flex w-[90%] h-14 items-center justify-between gap-4 px-4 sm:px-6">
         <Link
           href="/"
           className="shrink-0 text-base font-semibold tracking-tight text-white"

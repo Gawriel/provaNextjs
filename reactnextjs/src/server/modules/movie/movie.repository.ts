@@ -1,4 +1,4 @@
-import type { FilterQuery } from "mongoose";
+import type { QueryFilter } from "mongoose";
 import { connectDb } from "@/src/server/common/db/connect";
 import { parseObjectId } from "@/src/server/common/http/object-id";
 import { MovieModel, type MovieDocument } from "./movie.model";
@@ -23,7 +23,7 @@ export type MovieRecord = {
 };
 
 export const movieRepository = {
-  async findAll(filter: FilterQuery<MovieDocument>) {
+  async findAll(filter: QueryFilter<MovieDocument>) {
     await connectDb();
     return MovieModel.find(filter)
       .populate([...POPULATE])
